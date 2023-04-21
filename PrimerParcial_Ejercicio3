@@ -1,0 +1,84 @@
+import random
+
+# Tamaño de la matriz
+matrix_size = 3
+
+# Número máximo de iteraciones
+max_iterations = 1000
+
+# Tamaño de la población
+population_size = 100
+
+# Probabilidad de mutación
+mutation_probability = 0.1
+
+# Función de aptitud
+def fitness_function(solution):
+    # Penalizaciones por repetición y por números consecutivos
+    repeat_penalty = len(solution) - len(set(solution))
+    consecutive_penalty = 0
+    for i in range(matrix_size):
+        for j in range(matrix_size):
+            index = i * matrix_size + j
+            if index > 0 and abs(solution[index] - solution[index - 1]) == 1:
+                consecutive_penalty += 1
+            if index >= matrix_size and abs(solution[index] - solution[index - matrix_size]) == 1:
+                consecutive_penalty += 1
+    return 1.0 / (1.0 + repeat_penalty + consecutive_penalty)
+
+# Generación de la población inicial
+population = []
+for i in range(population_size):
+    solution = random.sample(range(1, matrix_size ** 2 + 1), matrix_size ** 2)
+    population.append(solution)
+
+# Bucle principal
+for iteration in range(max_iterations):
+    # Evaluación de la población
+    fitness = []
+    for solution in population:
+        fitness.append(fitness_function(solution))
+
+    # Selección de padres
+    parents = []
+    for i in range(population_size):
+        index1 = random.randint(0, population_size - 1)
+        index2 = random.randint(0, population_size - 1)
+        if fitness[index1] > fitness[index2]:
+            parents.append(population[index1])
+        else:
+            parents.append(population[index2])
+
+    # Cruzamiento y mutación
+    offspring = []
+    for i in range(population_size):
+        parent1 = parents[random.randint(0, population_size - 1)]
+        parent2 = parents[random.randint(0, population_size - 1)]
+        crossover_point1 = random.randint(0, matrix_size ** 2 - 1)
+        crossover_point2 = random.randint(crossover_point1, matrix_size ** 2 - 1)
+        child = parent1[:crossover_point1] + parent2[crossover_point1:crossover_point2] + parent1[crossover_point2:]
+        if random.random() < mutation_probability:
+            mutation_point = random.randint(0, matrix_size ** 2 - 1)
+            mutation_value = random.randint(1, matrix_size ** 2)
+            child[mutation_point] = mutation_value
+        offspring.append(child)
+
+    # Selección de supervivientes
+    combined_population = population + offspring
+    combined_fitness = []
+    for solution in combined_population:
+        combined_fitness.append(fitness_function(solution))
+    combined_index = list(range(len(combined_population)))
+    combined_index.sort(key=lambda x: combined_fitness[x], reverse=True)
+    population = [combined_population[i] for i in combined_index[:population_size]]
+
+# Devolución de la mejor solución encontrada
+best_fitness = 0
+best_solution = None
+for solution in population:
+    fitness = fitness_function(solution)
+    if fitness > best_fitness:
+        best_fitness = fitness
+        best_solution = solution
+
+print("Mejor solución encontrada: ", best_solution)

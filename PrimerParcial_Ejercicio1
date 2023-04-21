@@ -1,0 +1,66 @@
+import heapq
+
+def posiciones(matriz, item):
+    for i, row in enumerate(matriz):
+        try:
+            j = row.index(item)
+            return [i, j]
+        except ValueError:
+            pass
+    return None
+
+# calcular la distancia entre dos nodos
+def calcular_distancia(p1, p2):
+    return abs(p1[0]-p2[0]) + abs(p1[1]-p2[1])
+
+# encontrar el camino más corto desde un nodo inicial hasta un nodo final
+def a_estrella(matriz, inicio, final):
+    # nodos visitados
+    visitados = []
+    # cola de prioridad de nodos a visitar
+    cola = [[0, inicio, []]] # una cola de una tupla de tres parametros
+    while cola: # mientras exista datos en la cola
+        # obtener el nodo con la menor distancia hasta el momento
+        [distancia, nodo, camino] = heapq.heappop(cola) # heappop elimina y devuelve el elemento minimo
+        # [distancia, nodo, camino] = cola.pop() # heappop quita un elemento de la cola y lo guarda en item_cola
+        # si el nodo es el nodo final, se ha encontrado el camino más corto
+        if nodo == final:
+            camino.append(nodo)             
+            return camino
+        # si el nodo no ha sido visitado aún, agregarlo a la lista de visitados
+        if nodo not in visitados:
+            visitados.append(nodo)
+            # agregar los nodos adyacentes a la cola de prioridad
+            for (x, y) in [[0,1],[1,0],[0,-1],[-1,0]]:
+                fila = nodo[0] + x 
+                columna = nodo[1] + y
+                # validamos para que no se salga fuera de las paredes de la matriz
+                if 0 <= fila < len(matriz) and 0 <= columna < len(matriz[0]) and matriz[fila][columna] != '#':
+                    distancia_auxi = calcular_distancia(nodo, [fila, columna]) # [2, 4, 5, 8]  
+                    heapq.heappush(cola, (distancia_auxi + distancia, [fila, columna], camino+[nodo])) # agrega a la cola y ordena en base # distancia_auxi + distancia 
+                    # cola.append((distancia_auxi + distancia, [fila,columna], camino+[nodo]))
+                    # cola = insertar_en_heap(cola, (distancia_auxi + distancia, [fila,columna], camino+[nodo]))
+    # si no se encuentra el camino, devolver None
+    return None
+
+if __name__ == "__main__":
+    laberinto = [['E', ' ', ' ', ' ', '#', '#', '#', ' ', ' ', ' '],
+        [' ', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', '#', ' ', ' ', '#', ' ', ' ', '#', ' ', '#'],
+        ['#', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#'],
+        [' ', ' ', ' ', ' ', '#', '#', ' ', '#', ' ', ' '],
+        [' ', '#', '#', ' ', ' ', '#', ' ', ' ', ' ', 'S3'],
+        [' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'],
+        [' ', '#', ' ', '#', '#', '#', '#', '#', ' ', '#'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' '],
+        ['#', ' ', ' ', 'S1', '#', '#', '#', ' ', ' ', 'S2']]
+
+    inicio = 'E'
+    salidas = ['S1', 'S2', 'S3']
+    inicio_posicion = posiciones(laberinto, inicio)
+    salidas_posiciones = [posiciones(laberinto, s) for s in salidas]
+    distancias = [{'posicion': p, 'distancia': calcular_distancia(inicio_posicion, p)} for p in salidas_posiciones]
+    final_posicion = sorted(distancias, key=lambda x: x['distancia'])[0]['posicion']
+    camino = a_estrella(laberinto, inicio_posicion, final_posicion)
+
+    print(camino)
